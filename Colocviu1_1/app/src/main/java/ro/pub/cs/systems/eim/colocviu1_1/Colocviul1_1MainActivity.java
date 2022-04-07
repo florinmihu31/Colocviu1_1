@@ -4,8 +4,10 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -32,6 +34,8 @@ public class Colocviul1_1MainActivity extends AppCompatActivity {
     private final String CLICKS_NO_KEY = "clicksNo";
     public static final String DIRECTION_KEY = "direction";
     private final int REQUEST_CODE = 1001;
+
+    private IntentFilter intentFilter = new IntentFilter();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,6 +64,8 @@ public class Colocviul1_1MainActivity extends AppCompatActivity {
         }
 
         Log.d("TAG", "" + clicksNo);
+
+        intentFilter.addAction("ro.pub.cs.systems.eim.colocviu1_1.Colocviu1_1Service");
     }
 
     @Override
@@ -102,6 +108,20 @@ public class Colocviul1_1MainActivity extends AppCompatActivity {
             }
 
             clicksNo++;
+
+            if (clicksNo > 4) {
+                Intent intent = new Intent(getApplicationContext(), Colocviu1_1Service.class);
+                intent.putExtra(DIRECTION_KEY, textView.getText().toString());
+                getApplicationContext().startService(intent);
+            }
+        }
+    }
+
+    private MessageBroadcastReceiver messageBroadcastReceiver = new MessageBroadcastReceiver();
+    private class MessageBroadcastReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d("TAG", intent.getStringExtra(Colocviu1_1Thread.BROADCAST_KEY));
         }
     }
 
@@ -127,5 +147,24 @@ public class Colocviul1_1MainActivity extends AppCompatActivity {
         if (requestCode == REQUEST_CODE) {
             Toast.makeText(this, "Result code: " + resultCode, Toast.LENGTH_SHORT).show();
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        registerReceiver(messageBroadcastReceiver, intentFilter);
+    }
+
+    @Override
+    protected void onPause() {
+        unregisterReceiver(messageBroadcastReceiver);
+        super.onPause();
+    }
+
+    @Override
+    protected void onDestroy() {
+        Intent intent = new Intent(this, Colocviu1_1Service.class);
+        stopService(intent);
+        super.onDestroy();
     }
 }
