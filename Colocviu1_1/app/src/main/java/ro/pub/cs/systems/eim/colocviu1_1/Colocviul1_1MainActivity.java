@@ -1,12 +1,17 @@
 package ro.pub.cs.systems.eim.colocviu1_1;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class Colocviul1_1MainActivity extends AppCompatActivity {
 
@@ -18,11 +23,15 @@ public class Colocviul1_1MainActivity extends AppCompatActivity {
     private TextView textView;
 
     public DirectionButtonListener directionButtonListener = new DirectionButtonListener();
+    public NavigateButtonListener navigateButtonListener = new NavigateButtonListener();
 
-    public int clicksNo;
+    private int clicksNo = 0;
+    private int clicksNoSecondaryActivity = 0;
+    private String direction = "";
 
     private final String CLICKS_NO_KEY = "clicksNo";
-
+    public static final String DIRECTION_KEY = "direction";
+    private final int REQUEST_CODE = 1001;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,22 +51,36 @@ public class Colocviul1_1MainActivity extends AppCompatActivity {
         westButton.setOnClickListener(directionButtonListener);
 
         navigateButton = (Button)findViewById(R.id.navigate_button);
+        navigateButton.setOnClickListener(navigateButtonListener);
 
         textView = (TextView)findViewById(R.id.text_view);
 
-        clicksNo = 0;
+        if (savedInstanceState != null) {
+            clicksNo = savedInstanceState.getInt(CLICKS_NO_KEY);
+        }
+
+        Log.d("TAG", "" + clicksNo);
     }
 
     @Override
     protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
+
         outState.putInt(CLICKS_NO_KEY, this.clicksNo);
+        Log.d("TAG", "onSaveInstanceState: "  + clicksNo);
+
+        outState.putString(DIRECTION_KEY, direction);
+        Log.d("TAG", "onSaveInstanceState: " + direction);
+
+        outState.putInt(CLICKS_NO_KEY, this.clicksNoSecondaryActivity);
+        Log.d("TAG", "onSaveInstanceState: "  + clicksNoSecondaryActivity);
     }
 
     @Override
     protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
         clicksNo = savedInstanceState.getInt(CLICKS_NO_KEY);
+        Log.d("TAG", "onRestoreInstanceState: " + clicksNo);
     }
 
     private class DirectionButtonListener implements View.OnClickListener {
@@ -79,6 +102,30 @@ public class Colocviul1_1MainActivity extends AppCompatActivity {
             }
 
             clicksNo++;
+        }
+    }
+
+    private class NavigateButtonListener implements View.OnClickListener {
+        @Override
+        public void onClick(View view) {
+            direction = textView.getText().toString();
+            clicksNoSecondaryActivity = clicksNo;
+
+            textView.setText("");
+            clicksNo = 0;
+
+            Intent intent = new Intent(Colocviul1_1MainActivity.this, Colocviul1_1SecondaryActivity.class);
+            intent.putExtra(DIRECTION_KEY, direction);
+            startActivityForResult(intent, REQUEST_CODE);
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == REQUEST_CODE) {
+            Toast.makeText(this, "Result code: " + resultCode, Toast.LENGTH_SHORT).show();
         }
     }
 }
